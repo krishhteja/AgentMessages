@@ -8,7 +8,10 @@ import java.awt.Toolkit;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -88,6 +91,14 @@ public class MsgGui extends JFrame {
 		updateRcvrDropDown();
 		receivers = new JComboBox(rcvrList.toArray());
 		receivers.setPreferredSize(new Dimension(400, 30));
+		
+		/*Timer t = new Timer();
+		t.schedule(new TimerTask() {
+		    @Override
+		    public void run() {
+		       updateRcvrDropDown();
+		    }
+		}, 0, 5000); */
 		
 		controlPanel = new JPanel();
 		controlPanel.add(TypeLable);
@@ -169,10 +180,12 @@ public class MsgGui extends JFrame {
 	}
 	
 	public void updateRcvrDropDown(){
+		System.out.println("Updating receiver list " + MsgAgent.agentList.toString());
 		for(String agentName : MsgAgent.agentList){
-			if(MsgAgent.getLocalName().equals(agentName) || rcvrList.contains(agentName))
-				continue;
-			rcvrList.add(agentName);
+			if(!MsgAgent.getLocalName().equals(agentName)){
+				System.out.println(agentName);
+				receivers.addItem(agentName);
+			}
 		}
 	}
 }

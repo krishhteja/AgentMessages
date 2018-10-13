@@ -2,10 +2,13 @@ package messages;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Timer;
 
 import jade.core.AID;
+import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.TickerBehaviour;
 import jade.domain.AMSService;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
@@ -31,22 +34,32 @@ public class MsgAgent extends GuiAgent {
 	public static int agentCounterFinal = 0;
 
 	protected void setup() {
-		// Printout a welcome message
 		System.out.println("Messenger agent "+getAID().getName()+" is ready.");
 
-		/*This part will query the AMS to get list of all active agents in all containers*/
 		agentList	=	new ArrayList();
-		refreshActiveAgents();
 
-		// Create and show the GUI
+		Behaviour loop;
+		loop = new TickerBehaviour( this, 5000 ){
+			protected void onTick() {
+				refreshActiveAgents();
+			}
+		};
+
+		addBehaviour( loop );
+		
 		msgGui = new MsgGui(this);
 		msgGui.drawGUI();
+		
+		Behaviour loop2;
+		loop2 = new TickerBehaviour( this, 5000 ){
+			protected void onTick() {
+				msgGui.receivers.removeAllItems();
+				msgGui.updateRcvrDropDown();
+			}
+		};
 
-
-		/** This piece of code, to register services with the DF, is explained
-		 * in the book in section 4.4.2.1, page 73
-		 **/
-		// Register the book-selling service in the yellow pages
+		addBehaviour( loop2 );
+		
 		DFAgentDescription dfd = new DFAgentDescription();
 		dfd.setName(getAID());
 		ServiceDescription sd = new ServiceDescription();
@@ -108,11 +121,8 @@ public class MsgAgent extends GuiAgent {
 	}
 
 	public class ReceiveMessage extends CyclicBehaviour {
-
 		private String messageContent;
 		private String SenderName;
-
-		// Receive message and append it in the conversation textArea in the GUI
 		public void action() {
 			ACLMessage msg = receive();
 			if(msg != null) {
@@ -142,6 +152,7 @@ public class MsgAgent extends GuiAgent {
 
 	public void refreshActiveAgents(){
 		AMSAgentDescription [] agents = null;
+		agentList.clear();
 	    try {
 	        SearchConstraints searchConstraints = new SearchConstraints();
 	        searchConstraints.setMaxResults ( new Long(-1) );
@@ -152,9 +163,8 @@ public class MsgAgent extends GuiAgent {
 	    }
 	    for (int i=0; i<agents.length;i++){
 	        AID agentID = agents[i].getName();
-	        if(agentID.getLocalName().equals("ams") || agentID.getLocalName().equals("rma") || agentID.getLocalName().equals("df"))
-	        	continue;
-	        agentList.add(agentID.getLocalName());
+	        if(!agentID.getLocalName().equals("ams") && !agentID.getLocalName().equals("rma") && !agentID.getLocalName().equals("df"))
+	        	agentList.add(agentID.getLocalName());
 	    }
 	}
 
